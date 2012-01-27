@@ -1,6 +1,5 @@
 package test.pcohen;
 
-import java.util.Collection;
 import java.util.Map;
 
 public interface CassandraService {

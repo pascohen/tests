@@ -28,7 +28,7 @@ public class CassandraServiceMain {
 		e3.setTimestamp(10l);
 		
 		cs.addEntry(e1,10);
-		cs.addEntry(e2,10);
+		cs.addEntry(e2,-10);
 		cs.addEntry(e3,10);
 
 	}
@@ -41,8 +41,9 @@ public class CassandraServiceMain {
 		CassandraService cs = new CassandraServiceWithSuperCfImpl("Test Cluster", cassandraHostConfigurator, "MyKeySpace");
 		
 		//fillDB(cs);
-		//System.out.println(cs.get("user1"));
-		System.out.println(cs.get("user2","dcx1"));
+		System.out.println(cs.get("user1"));
+		System.out.println(cs.get("user1","id1"));
+		
 			
 	}
 

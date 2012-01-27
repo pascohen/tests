@@ -40,7 +40,8 @@ public class CassandraServiceWithCompositeKeyImpl implements CassandraService {
 					.createColumnFamilyDefinition(keySpaceName, REQUESTS_CF,
 							ComparatorType.ASCIITYPE);
 			cfDef.setDefaultValidationClass("AsciiType");
-
+			cfDef.setKeyValidationClass("AsciiType");
+			
 			List<ColumnFamilyDefinition> cfDefs = new ArrayList<ColumnFamilyDefinition>();
 			cfDefs.add(cfDef);
 			keyspaceDef = HFactory.createKeyspaceDefinition(keySpaceName,
@@ -82,10 +83,10 @@ public class CassandraServiceWithCompositeKeyImpl implements CassandraService {
 		 * HColumn<Composite, String> myUserCol = HFactory.createColumn(userCol,
 		 * userId, new CompositeSerializer(), StringSerializer.get());
 		 * Mutator<String> muser = HFactory.createMutator(keySpace,
-		 * StringSerializer.get()); muser.insert(userId, REQUESTS_CF,CassandraHostConfigurator
-		 * myUserCol);
+		 * StringSerializer.get()); muser.insert(userId,
+		 * REQUESTS_CF,CassandraHostConfigurator myUserCol);
 		 */
-		
+
 		Composite requestCol = new Composite();
 		requestCol.add(id);
 		requestCol.add(REQUEST_COL_NAME);
