@@ -37,12 +37,12 @@ public class CassandraServiceMain {
 		CassandraHostConfigurator cassandraHostConfigurator = new CassandraHostConfigurator();
 		cassandraHostConfigurator.setHosts("localhost:9160");
 		
-		//CassandraService cs = new CassandraServiceWithCompositeKeyImpl("Test Cluster", cassandraHostConfigurator, "MyKeySpace");
-		CassandraService cs = new CassandraServiceWithSuperCfImpl("Test Cluster", cassandraHostConfigurator, "MyKeySpace");
+		CassandraService cs = new CassandraServiceWithCompositeKeyImpl("Test Cluster", cassandraHostConfigurator, "MyKeySpace");
+		//CassandraService cs = new CassandraServiceWithSuperCfImpl("Test Cluster", cassandraHostConfigurator, "MyKeySpace");
 		
 		//fillDB(cs);
 		System.out.println(cs.get("user1"));
-		System.out.println(cs.get("user1","id1"));
+		System.out.println(cs.get("user21","id2"));
 		
 			
 	}

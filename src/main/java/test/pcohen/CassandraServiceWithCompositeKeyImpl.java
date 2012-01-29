@@ -16,8 +16,12 @@ import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
 import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.Keyspace;
+import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.Composite;
 import me.prettyprint.hector.api.beans.HColumn;
+import me.prettyprint.hector.api.beans.OrderedRows;
+import me.prettyprint.hector.api.beans.Row;
+import me.prettyprint.hector.api.beans.Rows;
 import me.prettyprint.hector.api.ddl.ColumnFamilyDefinition;
 import me.prettyprint.hector.api.ddl.ComparatorType;
 import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
@@ -25,6 +29,7 @@ import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.ColumnQuery;
 import me.prettyprint.hector.api.query.QueryResult;
+import me.prettyprint.hector.api.query.RangeSlicesQuery;
 
 public class CassandraServiceWithCompositeKeyImpl implements CassandraService {
 
@@ -41,7 +46,7 @@ public class CassandraServiceWithCompositeKeyImpl implements CassandraService {
 							ComparatorType.ASCIITYPE);
 			cfDef.setDefaultValidationClass("AsciiType");
 			cfDef.setKeyValidationClass("AsciiType");
-			
+
 			List<ColumnFamilyDefinition> cfDefs = new ArrayList<ColumnFamilyDefinition>();
 			cfDefs.add(cfDef);
 			keyspaceDef = HFactory.createKeyspaceDefinition(keySpaceName,
@@ -128,7 +133,8 @@ public class CassandraServiceWithCompositeKeyImpl implements CassandraService {
 		mts.insert(userId, REQUESTS_CF, myTsCol);
 	}
 
-	public Entry get(String userId, String id) {
+	public Entry oldGet(String userId, String id) {
+
 		Entry e = new Entry();
 		e.setId(id);
 		e.setUserId(userId);
@@ -173,7 +179,76 @@ public class CassandraServiceWithCompositeKeyImpl implements CassandraService {
 		} else {
 			return null;
 		}
+
 		return e;
+	}
+
+	public Entry get(String userId, String id) {
+
+		Composite requestCol = new Composite();
+		requestCol.add(id);
+		requestCol.add(REQUEST_COL_NAME);
+
+		Composite responseCol = new Composite();
+		responseCol.add(id);
+		responseCol.add(RESPONSE_COL_NAME);
+
+		Composite tsCol = new Composite();
+		tsCol.add(id);
+		tsCol.add(TIMESTAMP_COL_NAME);
+
+		RangeSlicesQuery<String, Composite, String> rsq = HFactory
+				.createRangeSlicesQuery(keySpace, StringSerializer.get(),
+						new CompositeSerializer(), StringSerializer.get());
+		rsq.setColumnFamily(REQUESTS_CF);
+
+		rsq.setColumnNames(requestCol, responseCol, tsCol);
+		rsq.setKeys(userId, userId);
+
+		QueryResult<OrderedRows<String, Composite, String>> results = rsq
+				.execute();
+		OrderedRows<String, Composite, String> rows = results.get();
+		if (rows != null) {
+			List<Row<String, Composite, String>> listRows = rows.getList();
+			if (listRows.size() > 0) {
+				Row<String, Composite, String> row = listRows.get(0);
+				if (row != null) {
+
+					ColumnSlice<Composite, String> colSlice = row
+							.getColumnSlice();
+					/*
+					 * Weird not working HColumn<Composite, String> request =
+					 * colSlice.getColumnByName(requestCol); HColumn<Composite,
+					 * String> response = colSlice.getColumnByName(responseCol);
+					 * HColumn<Composite, String> ts =
+					 * colSlice.getColumnByName(tsCol);
+					 */
+					List<HColumn<Composite, String>> cols = colSlice
+							.getColumns();
+					Entry e = new Entry();
+					e.setId(id);
+					e.setUserId(userId);
+					for (HColumn<Composite, String> col : cols) {
+						if (col.getNameBytes().equals(
+								new CompositeSerializer()
+										.toByteBuffer(requestCol))) {
+							e.setRequest(col.getValue());
+						}
+						if (col.getNameBytes().equals(
+								new CompositeSerializer()
+										.toByteBuffer(responseCol))) {
+							e.setResponse(col.getValue());
+						}
+						if (col.getNameBytes().equals(
+								new CompositeSerializer().toByteBuffer(tsCol))) {
+							e.setTimestamp(Long.parseLong(col.getValue()));
+						}
+					}
+					return e;
+				}
+			}
+		}
+		return null;
 	}
 
 	public Map<String, Entry> get(String userId) {
