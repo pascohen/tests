@@ -9,7 +9,7 @@
 		<dependency>
 			<groupId>me.prettyprint</groupId>
 			<artifactId>hector-core</artifactId>
-			<version>0.8.0-2</version>
+			<version>1.0-4</version>
 		</dependency>
 	</dependencies>
 
